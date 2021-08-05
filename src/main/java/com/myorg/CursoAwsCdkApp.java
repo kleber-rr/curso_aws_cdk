@@ -10,31 +10,25 @@ public class CursoAwsCdkApp {
     public static void main(final String[] args) {
         App app = new App();
 
-        new CursoAwsCdkStack(app, "CursoAwsCdkStack", StackProps.builder()
-                // If you don't specify 'env', this stack will be environment-agnostic.
-                // Account/Region-dependent features and context lookups will not work,
-                // but a single synthesized template can be deployed anywhere.
+        VpcStack vpcStack = new VpcStack(app, "Vpc"); //REDE PRIVADA
+        ClusterStack clusterStack = new ClusterStack(app, "Cluster", vpcStack.getVpc()); //criação de instâncias do servidor de aplicação
+        clusterStack.addDependency(vpcStack); //cluster depende da VPC
 
-                // Uncomment the next block to specialize this stack for the AWS Account
-                // and Region that are implied by the current CLI configuration.
-                /*
-                .env(Environment.builder()
-                        .account(System.getenv("CDK_DEFAULT_ACCOUNT"))
-                        .region(System.getenv("CDK_DEFAULT_REGION"))
-                        .build())
-                */
+        RdsStack rdsStack = new RdsStack(app, "Rds", vpcStack.getVpc()); //banco de dados
+        rdsStack.addDependency(vpcStack); //rds depende da VPC
 
-                // Uncomment the next block if you know exactly what Account and Region you
-                // want to deploy the stack to.
-                /*
-                .env(Environment.builder()
-                        .account("123456789012")
-                        .region("us-east-1")
-                        .build())
-                */
+        SnsStack snsStack = new SnsStack(app, "Sns"); //serviço de envio de mensagens de email, conforme os eventos criados
 
-                // For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-                .build());
+        //aplication load balance, helth check, entre outros para uma aplicação específica
+        Service01Stack service01Stack = new Service01Stack(app, "Service01", clusterStack.getCluster(), snsStack.getProductEventsTopic());
+        service01Stack.addDependency(clusterStack); // service depende do cluster
+        service01Stack.addDependency(rdsStack); // service depende do rds
+        service01Stack.addDependency(snsStack); //service depende do sns
+
+        //aplication load balance, helth check, entre outros para uma aplicação específica
+        Service02Stack service02Stack = new Service02Stack(app, "Service02", clusterStack.getCluster(), snsStack.getProductEventsTopic());
+        service02Stack.addDependency(clusterStack); // service depende do cluster
+        service02Stack.addDependency(snsStack); // service depende do sns
 
         app.synth();
     }
