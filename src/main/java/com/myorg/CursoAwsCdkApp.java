@@ -25,10 +25,13 @@ public class CursoAwsCdkApp {
         service01Stack.addDependency(rdsStack); // service depende do rds
         service01Stack.addDependency(snsStack); //service depende do sns
 
+        DdbStack ddbStack = new DdbStack(app, "Ddb");
+
         //aplication load balance, helth check, entre outros para uma aplicação específica
-        Service02Stack service02Stack = new Service02Stack(app, "Service02", clusterStack.getCluster(), snsStack.getProductEventsTopic());
+        Service02Stack service02Stack = new Service02Stack(app, "Service02", clusterStack.getCluster(), snsStack.getProductEventsTopic(), ddbStack.getProductEventsDdb());
         service02Stack.addDependency(clusterStack); // service depende do cluster
         service02Stack.addDependency(snsStack); // service depende do sns
+        service02Stack.addDependency(ddbStack); // service depende do ddbstack
 
         app.synth();
     }

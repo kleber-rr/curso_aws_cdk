@@ -13,6 +13,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Service01Stack extends Stack {
+
+    //VALORES PROPOSTOS NO CURSO
+    /*
+    private static final Number CPU = 512;
+    private static final Number MEMORY_LIMIT = 1024;
+    private static final Number DESIRED_COUNT_INSTANCES = 2;
+    private static final Number LISTENER_PORT = 8080;
+    private static final Number AUTO_SCALING_MIN = 2;
+    private static final Number AUTO_SCALING_MAX = 4;
+    private static final Number TARGET_UTIL_PERCENT = 50;
+    */
+    private static final Number CPU = 256;
+    private static final Number MEMORY_LIMIT = 512;
+    private static final Number DESIRED_COUNT_INSTANCES = 1;
+    private static final Number LISTENER_PORT = 8080;
+    private static final Number AUTO_SCALING_MIN = 1;
+    private static final Number AUTO_SCALING_MAX = 2;
+    private static final Number TARGET_UTIL_PERCENT = 50;
+
     public Service01Stack(final Construct scope, final String id, Cluster cluster, SnsTopic productEventsTopic) {
         this(scope, id, null, cluster, productEventsTopic);
     }
@@ -33,15 +52,15 @@ public class Service01Stack extends Stack {
         ApplicationLoadBalancedFargateService service01 = ApplicationLoadBalancedFargateService.Builder.create(this, "ALB01")
                 .serviceName("service-01")
                 .cluster(cluster)
-                .cpu(512)
-                .memoryLimitMiB(1024) //quantidade de memoria para rodar a aplicacao
-                .desiredCount(2) //quantidade de instancias iniciais
-                .listenerPort(8080)
+                .cpu(CPU)
+                .memoryLimitMiB(MEMORY_LIMIT) //quantidade de memoria para rodar a aplicacao
+                .desiredCount(DESIRED_COUNT_INSTANCES) //quantidade de instancias iniciais
+                .listenerPort(LISTENER_PORT)
                 .taskImageOptions(
                         ApplicationLoadBalancedTaskImageOptions.builder()
                                 .containerName("aws_project01")
                                 .image(ContainerImage.fromRegistry("kleberrr/curso_aws_project01:1.6.0"))
-                                .containerPort(8080)
+                                .containerPort(LISTENER_PORT)
                                 .logDriver(
                                         LogDriver.awsLogs(
                                                 AwsLogDriverProps.builder()
@@ -61,18 +80,18 @@ public class Service01Stack extends Stack {
         //criação do target Group
         service01.getTargetGroup().configureHealthCheck(new HealthCheck.Builder()
                 .path("/actuator/health")
-                .port("8080")
+                .port(String.valueOf(LISTENER_PORT))
                 .healthyHttpCodes("200")
                 .build());
 
         //criação do scalable task count, define qual a capacidade mínima e maxima da config de auto scaling
         ScalableTaskCount scalableTaskCount = service01.getService().autoScaleTaskCount(EnableScalingProps.builder()
-                        .minCapacity(2)
-                        .maxCapacity(4)
+                        .minCapacity(AUTO_SCALING_MIN)
+                        .maxCapacity(AUTO_SCALING_MAX)
                 .build());
 
         scalableTaskCount.scaleOnCpuUtilization("Service01AutoScaling", CpuUtilizationScalingProps.builder()
-                        .targetUtilizationPercent(50) //se o consumo médio de CPU ultrapassar os 50%...
+                        .targetUtilizationPercent(TARGET_UTIL_PERCENT) //se o consumo médio de CPU ultrapassar os 50%...
                         .scaleInCooldown(Duration.seconds(60)) // ... em 60 segundos, cria-se uma nova instancia no limite de 4 instancias
                         .scaleOutCooldown(Duration.seconds(60)) //periodo de análise para destruir as instancias que não estão sendo usadas
                 .build());
