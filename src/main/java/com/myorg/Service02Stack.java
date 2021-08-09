@@ -79,7 +79,7 @@ public class Service02Stack extends Stack {
                 .taskImageOptions(
                         ApplicationLoadBalancedTaskImageOptions.builder()
                                 .containerName("aws_project02")
-                                .image(ContainerImage.fromRegistry("kleberrr/curso_aws_project02:1.3.1"))
+                                .image(ContainerImage.fromRegistry("kleberrr/curso_aws_project02:1.5.0"))
                                 .containerPort(LISTENER_PORT)
                                 .logDriver(
                                         LogDriver.awsLogs(
